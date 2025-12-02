@@ -1,0 +1,119 @@
+<section class="crud">
+  <header class="crud__header">
+    <div>
+      <p>Gestión de Estudiantes</p>
+      <h1>Expedientes por grado</h1>
+    </div>
+    <button type="button" (click)="startCreate()">
+      @if (editingId()) { Guardar nuevo } @else { Registrar }
+    </button>
+  </header>
+
+  <div class="crud__toolbar">
+    <input
+      type="search"
+      placeholder="Buscar por nombre o grado"
+      [value]="filter()"
+      (input)="filter.set($any($event.target).value)"
+    />
+  </div>
+
+  <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="crud__form-row">
+      <label>
+        Nombre completo
+        <input type="text" formControlName="name" placeholder="Ej. Ana Torres" />
+      </label>
+      <label>
+        Grado/Sección
+        <input type="text" formControlName="grade" placeholder="Ej. 5°A" />
+      </label>
+      <label>
+        Estado
+        <select formControlName="status">
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+      </label>
+      <label>
+        Rol
+        <select formControlName="role">
+          @for (role of roles; track role) {
+            <option [value]="role">{{ role }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="crud__form-actions">
+      <button type="submit">@if (editingId()) { Actualizar } @else { Guardar }</button>
+      <button type="button" class="crud__export" (click)="exportStudents()">Exportar</button>
+      <button type="button" (click)="startCreate()">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="crud__table">
+    @if (filteredStudents().length === 0) {
+      <div class="crud__empty">No encontramos estudiantes con esa búsqueda.</div>
+    } @else {
+      <div class="crud__table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Grado</th>
+              <th>Estado</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of filteredStudents(); track student.id) {
+              <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.grade }}</td>
+                <td>{{ student.status }}</td>
+                <td>{{ student.role }}</td>
+                <td class="crud__actions">
+                  <button type="button" (click)="openProfile(student)">Cuenta</button>
+                  <button type="button" (click)="startEdit(student)">Editar</button>
+                  <button type="button" (click)="deleteStudent(student.id)">Eliminar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  @if (selectedStudent()) {
+    <aside class="profile-card">
+      <header>
+        <div>
+          <p>Perfil del estudiante</p>
+          <h2>{{ selectedStudent()?.name }}</h2>
+          <span class="profile-card__role">{{ selectedStudent()?.role }}</span>
+        </div>
+        <button type="button" (click)="closeProfile()">Cerrar</button>
+      </header>
+
+      <dl>
+        <div>
+          <dt>Grado</dt>
+          <dd>{{ selectedStudent()?.grade }}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{ selectedStudent()?.status }}</dd>
+        </div>
+        <div>
+          <dt>Rol</dt>
+          <dd>{{ selectedStudent()?.role }}</dd>
+        </div>
+      </dl>
+
+      <p class="profile-card__hint">Puedes actualizar su información en el formulario y pulsar Guardar.</p>
+    </aside>
+  }
+</section>

@@ -1,0 +1,224 @@
+:host {
+  display: block;
+}
+
+.portal {
+  min-height: 100vh;
+  padding: 3rem clamp(1.5rem, 4vw, 4rem);
+  background: radial-gradient(circle at top, #1e2b52, #080c1a 75%);
+  color: #fff;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.portal__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.portal__brand {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8fb1ff;
+}
+
+.portal__nav ul {
+  display: flex;
+  list-style: none;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+}
+
+.portal__nav a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 500;
+}
+
+.portal__nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.portal__nav a.is-active {
+  background: linear-gradient(135deg, #5d9cff, #845efc);
+  color: #fff;
+  box-shadow: 0 10px 25px rgba(93, 156, 255, 0.35);
+}
+
+.portal__content {
+  background: transparent;
+}
+
+.portal__account {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.portal__account p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.portal__account small {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.portal__account button {
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.35rem 0.9rem;
+  transition: opacity 0.2s ease;
+}
+
+.portal__account button:hover {
+  opacity: 0.85;
+}
+
+.portal__account button:not(.portal__account-logout) {
+  background: linear-gradient(135deg, #5d9cff, #845efc);
+  color: #fff;
+}
+
+.portal__account-logout {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.account-panel {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(12, 18, 40, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+}
+
+.account-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.account-panel h2 {
+  margin: 0.2rem 0 0;
+}
+
+.account-panel span {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+}
+
+.account-panel form {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.account-panel input,
+.account-panel select {
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  appearance: none;
+}
+
+.account-panel select option {
+  background: #0c1228;
+  color: #fff;
+}
+
+.account-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.account-panel__actions button {
+  flex: 1 1 200px;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+
+.account-panel__actions button:first-child {
+  background: linear-gradient(135deg, #5d9cff, #845efc);
+  color: #fff;
+  border: none;
+  box-shadow: 0 10px 25px rgba(93, 156, 255, 0.4);
+}
+
+.account-panel__actions button:first-child:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(93, 156, 255, 0.45);
+}
+
+.account-panel__actions button:last-child {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.account-panel__actions button:last-child:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.account-panel__logout {
+  background: rgba(255, 69, 98, 0.15) !important;
+  border: 1px solid rgba(255, 69, 98, 0.5) !important;
+  color: #ff7a94 !important;
+}
+
+.account-panel__logout:hover {
+  background: rgba(255, 69, 98, 0.25) !important;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+  .portal__nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .portal__nav ul {
+    flex-wrap: wrap;
+  }
+}

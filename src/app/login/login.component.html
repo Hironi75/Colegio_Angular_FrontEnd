@@ -1,0 +1,46 @@
+<section class="login">
+  <div class="login__card">
+    <header class="login__header">
+      <h1>Colegio Angular</h1>
+      <p>Inicia sesión para gestionar tu colegio.</p>
+    </header>
+
+    <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+      <label class="field">
+        <span>Correo electrónico</span>
+        <input type="email" formControlName="email" placeholder="tudireccion@email.com" />
+        @if (emailErrors()) {
+          <small class="field__error">{{ emailErrors() }}</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <input type="password" formControlName="password" placeholder="••••••" />
+        @if (passwordErrors()) {
+          <small class="field__error">{{ passwordErrors() }}</small>
+        }
+      </label>
+
+      <label class="field field--inline">
+        <input type="checkbox" formControlName="remember" />
+        <span>Recordarme</span>
+      </label>
+
+      <button class="login__submit" type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          <span>Ingresando…</span>
+        } @else {
+          <span>Ingresar</span>
+        }
+      </button>
+    </form>
+
+    @if (feedback()) {
+      <p class="login__feedback" [class.login__feedback--error]="feedback()?.type === 'error'">
+        {{ feedback()?.message }}
+      </p>
+    }
+  </div>
+</section>
+

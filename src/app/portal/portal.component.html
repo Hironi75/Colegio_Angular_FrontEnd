@@ -1,0 +1,65 @@
+<section class="portal">
+  <nav class="portal__nav">
+    <span class="portal__brand">Colegio Angular</span>
+    <ul>
+      <li><a routerLink="/portal/home" routerLinkActive="is-active">Inicio</a></li>
+      <li><a routerLink="/portal/students" routerLinkActive="is-active">Estudiantes</a></li>
+      <li><a routerLink="/portal/teachers" routerLinkActive="is-active">Docentes</a></li>
+      <li><a routerLink="/portal/courses" routerLinkActive="is-active">Cursos</a></li>
+      <li><a routerLink="/portal/dashboard" routerLinkActive="is-active">Dashboard</a></li>
+    </ul>
+
+    <div class="portal__account">
+      <div>
+        <p>{{ user().name }}</p>
+        <small>{{ user().email }}</small>
+      </div>
+      <button type="button" (click)="toggleAccountPanel()">
+        @if (accountOpen()) { Cerrar } @else { Cuenta }
+      </button>
+      <button type="button" class="portal__account-logout" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </nav>
+
+  @if (accountOpen()) {
+    <section class="account-panel">
+      <header>
+        <div>
+          <p>Cuenta de acceso</p>
+          <h2>{{ user().name }}</h2>
+          <span>{{ user().role }}</span>
+        </div>
+        <button type="button" (click)="toggleAccountPanel()">×</button>
+      </header>
+
+      <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
+        <label>
+          Nombre completo
+          <input type="text" formControlName="name" />
+        </label>
+        <label>
+          Correo institucional
+          <input type="email" formControlName="email" />
+        </label>
+        <label>
+          Rol
+          <select formControlName="role">
+            @for (role of roles; track role) {
+              <option [value]="role">{{ role }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="account-panel__actions">
+          <button type="submit">Guardar cambios</button>
+          <button type="button" (click)="cancelAccount()">Cancelar</button>
+          <button type="button" class="account-panel__logout" (click)="logout()">Cerrar sesión</button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="portal__content">
+    <router-outlet />
+  </section>
+</section>

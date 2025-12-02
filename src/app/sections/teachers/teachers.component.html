@@ -1,0 +1,78 @@
+<section class="crud">
+  <header class="crud__header">
+    <div>
+      <p>Equipo docente</p>
+      <h1>Asignaciones por materia</h1>
+    </div>
+    <button type="button" (click)="startCreate()">
+      @if (editingId()) { Nuevo docente } @else { Añadir }
+    </button>
+  </header>
+
+  <div class="crud__toolbar">
+    <input
+      type="search"
+      placeholder="Buscar por docente o materia"
+      [value]="filter()"
+      (input)="filter.set($any($event.target).value)"
+    />
+  </div>
+
+  <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="crud__form-row">
+      <label>
+        Nombre completo
+        <input type="text" formControlName="name" placeholder="Ej. Carmen Díaz" />
+      </label>
+      <label>
+        Materia
+        <input type="text" formControlName="subject" placeholder="Ej. Matemática" />
+      </label>
+      <label>
+        Disponibilidad
+        <select formControlName="availability">
+          <option value="Tiempo completo">Tiempo completo</option>
+          <option value="Medio tiempo">Medio tiempo</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="crud__form-actions">
+      <button type="submit">@if (editingId()) { Actualizar } @else { Guardar }</button>
+      <button type="button" class="crud__export" (click)="exportTeachers()">Exportar</button>
+      <button type="button" (click)="startCreate()">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="crud__table">
+    @if (filteredTeachers().length === 0) {
+      <div class="crud__empty">Sin docentes con esos filtros.</div>
+    } @else {
+      <div class="crud__table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Materia</th>
+              <th>Disponibilidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (teacher of filteredTeachers(); track teacher.id) {
+              <tr>
+                <td>{{ teacher.name }}</td>
+                <td>{{ teacher.subject }}</td>
+                <td>{{ teacher.availability }}</td>
+                <td>
+                  <button type="button" (click)="startEdit(teacher)">Editar</button>
+                  <button type="button" (click)="deleteTeacher(teacher.id)">Eliminar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

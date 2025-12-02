@@ -1,1 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root,
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #0f1a2f;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

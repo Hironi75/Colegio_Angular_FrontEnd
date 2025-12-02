@@ -1,0 +1,75 @@
+<section class="crud">
+  <header class="crud__header">
+    <div>
+      <p>Catálogo académico</p>
+      <h1>Cursos y niveles</h1>
+    </div>
+    <button type="button" (click)="startCreate()">
+      @if (editingId()) { Nuevo curso } @else { Crear }
+    </button>
+  </header>
+
+  <div class="crud__toolbar">
+    <input
+      type="search"
+      placeholder="Buscar por curso o nivel"
+      [value]="filter()"
+      (input)="filter.set($any($event.target).value)"
+    />
+  </div>
+
+  <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="crud__form-row">
+      <label>
+        Nombre del curso
+        <input type="text" formControlName="title" placeholder="Ej. Programación I" />
+      </label>
+      <label>
+        Nivel
+        <input type="text" formControlName="level" placeholder="Ej. Básico" />
+      </label>
+      <label>
+        Créditos
+        <input type="number" min="1" formControlName="credits" />
+      </label>
+    </div>
+
+    <div class="crud__form-actions">
+      <button type="submit">@if (editingId()) { Actualizar } @else { Guardar }</button>
+      <button type="button" class="crud__export" (click)="exportCourses()">Exportar</button>
+      <button type="button" (click)="startCreate()">Limpiar</button>
+    </div>
+  </form>
+
+  <div class="crud__table">
+    @if (filteredCourses().length === 0) {
+      <div class="crud__empty">Sin cursos con esos filtros.</div>
+    } @else {
+      <div class="crud__table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Curso</th>
+              <th>Nivel</th>
+              <th>Créditos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (course of filteredCourses(); track course.id) {
+              <tr>
+                <td>{{ course.title }}</td>
+                <td>{{ course.level }}</td>
+                <td>{{ course.credits }}</td>
+                <td>
+                  <button type="button" (click)="startEdit(course)">Editar</button>
+                  <button type="button" (click)="deleteCourse(course.id)">Eliminar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>
