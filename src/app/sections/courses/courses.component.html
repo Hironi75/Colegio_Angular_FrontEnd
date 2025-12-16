@@ -19,6 +19,13 @@
   </div>
 
   <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (loading()) {
+      <p class="crud__status">Sincronizando cambios...</p>
+    }
+    @if (error()) {
+      <p class="crud__status crud__status--error">{{ error() }}</p>
+    }
+
     <div class="crud__form-row">
       <label>
         Nombre del curso
@@ -34,6 +41,25 @@
       </label>
     </div>
 
+    <div class="crud__form-row">
+      <label>
+        Docente asignado (opcional)
+        <select formControlName="teacherId">
+          <option value="">Sin docente asignado</option>
+          @for (teacher of teachers(); track teacher.id) {
+            <option [value]="teacher.id">{{ teacher.full_name }} - {{ teacher.subject }}</option>
+          }
+        </select>
+        <small style="color: #9fb0ea; margin-top: 0.3rem;">
+          @if (teachers().length === 0) {
+            No hay docentes disponibles. Ve a la sección de Docentes para crear uno.
+          } @else {
+            {{ teachers().length }} docente(s) disponible(s)
+          }
+        </small>
+      </label>
+    </div>
+
     <div class="crud__form-actions">
       <button type="submit">@if (editingId()) { Actualizar } @else { Guardar }</button>
       <button type="button" class="crud__export" (click)="exportCourses()">Exportar</button>
@@ -42,6 +68,12 @@
   </form>
 
   <div class="crud__table">
+    @if (loading()) {
+      <div class="crud__empty">Cargando cursos...</div>
+    }
+    @if (error()) {
+      <div class="crud__empty">{{ error() }}</div>
+    }
     @if (filteredCourses().length === 0) {
       <div class="crud__empty">Sin cursos con esos filtros.</div>
     } @else {
@@ -52,6 +84,7 @@
               <th>Curso</th>
               <th>Nivel</th>
               <th>Créditos</th>
+              <th>Docente</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -61,6 +94,7 @@
                 <td>{{ course.title }}</td>
                 <td>{{ course.level }}</td>
                 <td>{{ course.credits }}</td>
+                <td>{{ course.teacherName || 'Sin asignar' }}</td>
                 <td>
                   <button type="button" (click)="startEdit(course)">Editar</button>
                   <button type="button" (click)="deleteCourse(course.id)">Eliminar</button>

@@ -19,6 +19,13 @@
   </div>
 
   <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (loading()) {
+      <p class="crud__status">Sincronizando cambios...</p>
+    }
+    @if (error()) {
+      <p class="crud__status crud__status--error">{{ error() }}</p>
+    }
+
     <div class="crud__form-row">
       <label>
         Nombre completo
@@ -53,6 +60,12 @@
   </form>
 
   <div class="crud__table">
+    @if (loading()) {
+      <div class="crud__empty">Cargando estudiantes...</div>
+    }
+    @if (error()) {
+      <div class="crud__empty">{{ error() }}</div>
+    }
     @if (filteredStudents().length === 0) {
       <div class="crud__empty">No encontramos estudiantes con esa búsqueda.</div>
     } @else {

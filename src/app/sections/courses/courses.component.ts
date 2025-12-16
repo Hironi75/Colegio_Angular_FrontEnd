@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
+import { tap } from 'rxjs/operators';
 import { exportToCsv } from '../../utils/csv-export';
+import { CoursesService, CourseDto } from '../../core/services/courses.service';
+import { TeachersService, TeacherDto } from '../../core/services/teachers.service';
 
 interface Course {
   id: string;
   title: string;
   level: string;
   credits: number;
+  teacherId?: string;
+  teacherName?: string;
 }
 
 @Component({
@@ -21,19 +25,75 @@ interface Course {
 })
 export class CoursesComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly coursesService = inject(CoursesService);
+  private readonly teachersService = inject(TeachersService);
 
   protected readonly filter = signal('');
-  protected readonly courses = signal<Course[]>([
-    { id: uuid(), title: 'Programación I', level: 'Básico', credits: 4 },
-    { id: uuid(), title: 'Física moderna', level: 'Avanzado', credits: 5 }
-  ]);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly courses = signal<Course[]>([]);
+  protected readonly teachers = signal<TeacherDto[]>([]);
   protected readonly editingId = signal<string | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     level: ['', Validators.required],
-    credits: [3, [Validators.required, Validators.min(1)]]
+    credits: [3, [Validators.required, Validators.min(1)]],
+    teacherId: ['']
   });
+
+  constructor() {
+    this.loadCourses();
+    this.loadTeachers();
+  }
+
+  private loadTeachers(): void {
+    this.teachersService.list().subscribe({
+      next: ({ items }) => {
+        console.log('Docentes cargados:', items);
+        this.teachers.set(items);
+      },
+      error: (err) => {
+        console.error('No se pudieron cargar los docentes.', err);
+        this.teachers.set([]);
+      }
+    });
+  }
+
+  private loadCourses(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.coursesService
+      .list()
+      .pipe(
+        tap(() => this.loading.set(true))
+      )
+      .subscribe({
+        next: ({ items }) => {
+          this.courses.set(items.map(dto => this.mapDtoToCourse(dto)));
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('No pudimos obtener la lista de cursos.');
+          this.loading.set(false);
+        }
+      });
+  }
+
+  private mapDtoToCourse(dto: CourseDto): Course {
+    const teacher = dto.teacher_id
+      ? this.teachers().find(t => t.id === dto.teacher_id)
+      : undefined;
+
+    return {
+      id: dto.id,
+      title: dto.title,
+      level: dto.level,
+      credits: dto.credits,
+      teacherId: dto.teacher_id,
+      teacherName: teacher?.full_name
+    };
+  }
 
   protected readonly filteredCourses = computed(() => {
     const term = this.filter().toLowerCase();
@@ -44,19 +104,34 @@ export class CoursesComponent {
 
   protected startCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ title: '', level: '', credits: 3 });
+    this.form.reset({ title: '', level: '', credits: 3, teacherId: '' });
   }
 
   protected startEdit(course: Course): void {
     this.editingId.set(course.id);
-    this.form.setValue({ title: course.title, level: course.level, credits: course.credits });
+    this.form.setValue({
+      title: course.title,
+      level: course.level,
+      credits: course.credits,
+      teacherId: course.teacherId || ''
+    });
   }
 
   protected deleteCourse(id: string): void {
-    this.courses.update((list) => list.filter((course) => course.id !== id));
-    if (this.editingId() === id) {
-      this.startCreate();
-    }
+    this.loading.set(true);
+    this.coursesService.delete(id).subscribe({
+      next: () => {
+        this.courses.update((list) => list.filter((course) => course.id !== id));
+        this.loading.set(false);
+        if (this.editingId() === id) {
+          this.startCreate();
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('No se pudo eliminar el curso.');
+      }
+    });
   }
 
   protected submit(): void {
@@ -65,21 +140,57 @@ export class CoursesComponent {
       return;
     }
 
-    const payload = { ...this.form.getRawValue(), id: this.editingId() ?? uuid() } as Course;
+    const payload = this.form.getRawValue();
 
-    this.courses.update((list) => {
-      if (this.editingId()) {
-        return list.map((item) => (item.id === payload.id ? payload : item));
+    this.loading.set(true);
+    const request = this.editingId()
+      ? this.coursesService.update(this.editingId()!, this.mapFormToDto(payload))
+      : this.coursesService.create(this.mapFormToDto(payload));
+
+    request.subscribe({
+      next: (dto) => {
+        const course = this.mapDtoToCourse(dto);
+        this.courses.update((list) => {
+          if (this.editingId()) {
+            return list.map((item) => (item.id === course.id ? course : item));
+          }
+          return [...list, course];
+        });
+
+        this.startCreate();
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('No se pudo guardar el curso.');
+        this.loading.set(false);
       }
-      return [...list, payload];
     });
+  }
 
-    this.startCreate();
+  private mapFormToDto(form: { title: string; level: string; credits: number; teacherId: string }): Partial<CourseDto> {
+    const dto: Partial<CourseDto> = {
+      title: form.title,
+      level: form.level,
+      credits: form.credits
+    };
+
+    // Solo agregar teacher_id si hay un docente seleccionado
+    if (form.teacherId) {
+      dto.teacher_id = form.teacherId;
+    }
+
+    return dto;
   }
 
   protected exportCourses(): void {
-    const header = ['Curso', 'Nivel', 'Créditos'];
-    const rows = this.courses().map((course) => [course.title, course.level, course.credits]);
+    const header = ['Curso', 'Nivel', 'Créditos', 'Docente'];
+    const rows = this.courses().map((course) => [
+      course.title,
+      course.level,
+      course.credits.toString(),
+      course.teacherName || 'Sin asignar'
+    ]);
     exportToCsv(header, rows, 'cursos.csv');
   }
 }
+

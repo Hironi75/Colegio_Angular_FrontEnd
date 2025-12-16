@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   protected readonly submitting = signal(false);
   protected readonly feedback = signal<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -70,19 +72,21 @@ export class LoginComponent {
     this.submitting.set(true);
     this.feedback.set(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
     const { email, password } = this.loginForm.getRawValue();
-    const success = email === 'admin@colegio.com' && password === '123456';
 
-    if (success) {
-      this.feedback.set({ type: 'success', message: 'Inicio de sesión exitoso. ¡Bienvenido!' });
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      await this.router.navigate(['/portal/dashboard']);
-      return;
-    }
-
-    this.feedback.set({ type: 'error', message: 'Credenciales inválidas. Intenta nuevamente.' });
-    this.submitting.set(false);
+    this.authService
+      .login(email, password)
+      .pipe()
+      .subscribe({
+        next: async () => {
+          this.feedback.set({ type: 'success', message: 'Inicio de sesión exitoso. ¡Bienvenido!' });
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          await this.router.navigate(['/portal/dashboard']);
+        },
+        error: () => {
+          this.feedback.set({ type: 'error', message: 'Credenciales inválidas o acceso denegado.' });
+          this.submitting.set(false);
+        }
+      });
   }
 }

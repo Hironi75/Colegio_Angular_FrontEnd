@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../core/services/auth.service';
+import { SessionStoreService } from '../core/services/session-store.service';
 
 interface PortalUser {
   name: string;
@@ -19,13 +21,17 @@ interface PortalUser {
 })
 export class PortalComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly sessionStore = inject(SessionStoreService);
 
   protected readonly roles: PortalUser['role'][] = ['Administrador', 'Coordinador', 'Docente'];
-  protected readonly user = signal<PortalUser>({
-    name: 'Gabriela Silva',
-    email: 'gabriela.silva@colegio.edu',
-    role: 'Administrador'
+  protected readonly user = computed(() => {
+    const sessionUser = this.sessionStore.user();
+    return {
+      name: sessionUser?.fullName ?? 'Usuario Portal',
+      email: sessionUser?.email ?? 'sin-correo@colegio.edu',
+      role: (sessionUser?.role as PortalUser['role']) ?? 'Administrador'
+    } satisfies PortalUser;
   });
   protected readonly accountOpen = signal(false);
 
@@ -50,7 +56,13 @@ export class PortalComponent {
       return;
     }
 
-    this.user.set(this.accountForm.getRawValue() as PortalUser);
+    const updated = this.accountForm.getRawValue() as PortalUser;
+    this.sessionStore.updateUser({
+      id: this.sessionStore.user()?.id ?? crypto.randomUUID(),
+      fullName: updated.name,
+      email: updated.email,
+      role: updated.role
+    });
     this.accountOpen.set(false);
   }
 
@@ -61,6 +73,6 @@ export class PortalComponent {
 
   protected logout(): void {
     this.accountOpen.set(false);
-    void this.router.navigate(['/login']);
+    this.authService.logout();
   }
 }

@@ -66,3 +66,20 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
 }
+
+/* Estilos para las opciones del select */
+select option {
+  background-color: #0a0e1a;
+  color: #fff;
+  padding: 0.5rem;
+}
+
+select option:hover {
+  background-color: #1a1f2e;
+}
+
+select option:checked {
+  background-color: #2a2f3e;
+  color: #5d9cff;
+}
+

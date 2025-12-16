@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
+import { startWith, switchMap, tap } from 'rxjs/operators';
 import { exportToCsv } from '../../utils/csv-export';
+import { StudentsService, StudentDto } from '../../core/services/students.service';
 
 interface Student {
   id: string;
@@ -22,14 +23,14 @@ interface Student {
 })
 export class StudentsComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly studentsService = inject(StudentsService);
+  private readonly refreshToken = signal(0);
 
   protected readonly filter = signal('');
   protected readonly roles: Student['role'][] = ['Estudiante', 'Prefecto', 'Administrador'];
-  protected readonly students = signal<Student[]>([
-    { id: uuid(), name: 'Ana Torres', grade: '5°A', status: 'Activo', role: 'Estudiante' },
-    { id: uuid(), name: 'Luis Pérez', grade: '4°B', status: 'Activo', role: 'Prefecto' },
-    { id: uuid(), name: 'María López', grade: '3°C', status: 'Inactivo', role: 'Administrador' }
-  ]);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly students = signal<Student[]>([]);
   protected readonly editingId = signal<string | null>(null);
   protected readonly selectedStudent = signal<Student | null>(null);
 
@@ -39,6 +40,40 @@ export class StudentsComponent {
     status: ['Activo' as Student['status'], Validators.required],
     role: ['Estudiante' as Student['role'], Validators.required]
   });
+
+  constructor() {
+    this.loadStudents();
+  }
+
+  private loadStudents(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.studentsService
+      .list()
+      .pipe(
+        tap(() => this.loading.set(true))
+      )
+      .subscribe({
+        next: ({ items }) => {
+          this.students.set(items.map(this.mapDtoToStudent));
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('No pudimos obtener la lista de estudiantes.');
+          this.loading.set(false);
+        }
+      });
+  }
+
+  private mapDtoToStudent(dto: StudentDto): Student {
+    return {
+      id: dto.id,
+      name: dto.full_name,
+      grade: dto.grade,
+      status: dto.status,
+      role: (dto.role as Student['role']) ?? 'Estudiante'
+    } satisfies Student;
+  }
 
   protected readonly filteredStudents = computed(() => {
     const term = this.filter().toLowerCase();
@@ -70,10 +105,20 @@ export class StudentsComponent {
   }
 
   protected deleteStudent(id: string): void {
-    this.students.update((list) => list.filter((student) => student.id !== id));
-    if (this.editingId() === id || this.selectedStudent()?.id === id) {
-      this.startCreate();
-    }
+    this.loading.set(true);
+    this.studentsService.delete(id).subscribe({
+      next: () => {
+        this.students.update((list) => list.filter((student) => student.id !== id));
+        this.loading.set(false);
+        if (this.editingId() === id || this.selectedStudent()?.id === id) {
+          this.startCreate();
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('No se pudo eliminar al estudiante.');
+      }
+    });
   }
 
   protected submit(): void {
@@ -82,21 +127,45 @@ export class StudentsComponent {
       return;
     }
 
-    const payload = { ...this.form.getRawValue(), id: this.editingId() ?? uuid() } as Student;
+    const payload = this.form.getRawValue();
 
-    this.students.update((list) => {
-      if (this.editingId()) {
-        return list.map((item) => (item.id === payload.id ? payload : item));
+    this.loading.set(true);
+    const request = this.editingId()
+      ? this.studentsService.update(this.editingId()!, this.mapFormToDto(payload))
+      : this.studentsService.create(this.mapFormToDto(payload));
+
+    request.subscribe({
+      next: (dto) => {
+        const student = this.mapDtoToStudent(dto as StudentDto);
+        this.students.update((list) => {
+          if (this.editingId()) {
+            return list.map((item) => (item.id === student.id ? student : item));
+          }
+          return [...list, student];
+        });
+
+        if (this.selectedStudent()?.id === student.id) {
+          this.selectedStudent.set(student);
+          this.startCreate({ keepSelected: true });
+        } else {
+          this.startCreate();
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('No se pudo guardar al estudiante.');
+        this.loading.set(false);
       }
-      return [...list, payload];
     });
+  }
 
-    if (this.selectedStudent()?.id === payload.id) {
-      this.selectedStudent.set(payload);
-      this.startCreate({ keepSelected: true });
-    } else {
-      this.startCreate();
-    }
+  private mapFormToDto(form: { name: string; grade: string; status: Student['status']; role: Student['role'] }): Partial<StudentDto> {
+    return {
+      full_name: form.name,
+      grade: form.grade,
+      status: form.status,
+      role: form.role
+    } satisfies Partial<StudentDto>;
   }
 
   protected exportStudents(): void {
