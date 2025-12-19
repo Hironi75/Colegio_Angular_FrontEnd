@@ -18,6 +18,14 @@
     />
   </div>
 
+  <!-- Filtros avanzados -->
+  <div class="crud__toolbar crud__toolbar--filters">
+    <input type="text" placeholder="Filtrar por nombre" [value]="filtros().nombre" (input)="setFiltro('nombre', $any($event.target).value)" />
+    <input type="text" placeholder="Filtrar por nivel" [value]="filtros().nivel" (input)="setFiltro('nivel', $any($event.target).value)" />
+    <input type="number" min="1" placeholder="Filtrar por créditos" [value]="filtros().creditos" (input)="setFiltro('creditos', $any($event.target).value)" />
+    <input type="text" placeholder="Filtrar por docente" [value]="filtros().docente" (input)="setFiltro('docente', $any($event.target).value)" />
+  </div>
+
   <form class="crud__form" [formGroup]="form" (ngSubmit)="submit()">
     @if (loading()) {
       <p class="crud__status">Sincronizando cambios...</p>
@@ -29,11 +37,15 @@
     <div class="crud__form-row">
       <label>
         Nombre del curso
-        <input type="text" formControlName="title" placeholder="Ej. Programación I" />
+        <input type="text" formControlName="title" placeholder="Ej. 5to A" />
       </label>
       <label>
         Nivel
-        <input type="text" formControlName="level" placeholder="Ej. Básico" />
+        <select formControlName="level">
+          <option value="">Selecciona un nivel</option>
+          <option value="Primaria">Primaria</option>
+          <option value="Secundaria">Secundaria</option>
+        </select>
       </label>
       <label>
         Créditos

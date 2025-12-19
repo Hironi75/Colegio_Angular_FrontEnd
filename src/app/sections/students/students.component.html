@@ -33,7 +33,12 @@
       </label>
       <label>
         Grado/Sección
-        <input type="text" formControlName="grade" placeholder="Ej. 5°A" />
+        <select formControlName="grade">
+          <option value="">Selecciona un curso</option>
+          @for (course of courses(); track course.id) {
+            <option [value]="course.title">{{ course.title }} ({{ course.level }})</option>
+          }
+        </select>
       </label>
       <label>
         Estado

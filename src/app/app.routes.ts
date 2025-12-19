@@ -17,6 +17,7 @@ export const routes: Routes = [
       { path: 'students', loadComponent: () => import('./sections/students/students.component').then(m => m.StudentsComponent) },
       { path: 'teachers', loadComponent: () => import('./sections/teachers/teachers.component').then(m => m.TeachersComponent) },
       { path: 'courses', loadComponent: () => import('./sections/courses/courses.component').then(m => m.CoursesComponent) },
+      { path: 'grades', loadComponent: () => import('./sections/grades/grades.component').then(m => m.GradesComponent) },
       { path: 'dashboard', component: DashboardComponent }
     ]
   },

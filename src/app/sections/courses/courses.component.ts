@@ -35,6 +35,28 @@ export class CoursesComponent {
   protected readonly teachers = signal<TeacherDto[]>([]);
   protected readonly editingId = signal<string | null>(null);
 
+  // Filtros avanzados
+  protected readonly filtros = signal({
+    nombre: '',
+    nivel: '',
+    creditos: '',
+    docente: ''
+  });
+
+  setFiltro(key: 'nombre' | 'nivel' | 'creditos' | 'docente', value: string): void {
+    this.filtros.set({ ...this.filtros(), [key]: value });
+  }
+
+  filteredCourses(): Course[] {
+    const { nombre, nivel, creditos, docente } = this.filtros();
+    return this.courses().filter(course =>
+      (!nombre || course.title.toLowerCase().includes(nombre.toLowerCase())) &&
+      (!nivel || course.level.toLowerCase().includes(nivel.toLowerCase())) &&
+      (!creditos || course.credits === +creditos) &&
+      (!docente || (course.teacherName || '').toLowerCase().includes(docente.toLowerCase()))
+    );
+  }
+
   protected readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     level: ['', Validators.required],
@@ -94,13 +116,6 @@ export class CoursesComponent {
       teacherName: teacher?.full_name
     };
   }
-
-  protected readonly filteredCourses = computed(() => {
-    const term = this.filter().toLowerCase();
-    return this.courses().filter((course) =>
-      course.title.toLowerCase().includes(term) || course.level.toLowerCase().includes(term)
-    );
-  });
 
   protected startCreate(): void {
     this.editingId.set(null);
@@ -193,4 +208,3 @@ export class CoursesComponent {
     exportToCsv(header, rows, 'cursos.csv');
   }
 }
-

@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith, switchMap, tap } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { exportToCsv } from '../../utils/csv-export';
 import { StudentsService, StudentDto } from '../../core/services/students.service';
+import { CoursesService, CourseDto } from '../../core/services/courses.service';
 
 interface Student {
   id: string;
@@ -24,13 +25,14 @@ interface Student {
 export class StudentsComponent {
   private readonly fb = inject(FormBuilder);
   private readonly studentsService = inject(StudentsService);
-  private readonly refreshToken = signal(0);
+  private readonly coursesService = inject(CoursesService);
 
   protected readonly filter = signal('');
   protected readonly roles: Student['role'][] = ['Estudiante', 'Prefecto', 'Administrador'];
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly students = signal<Student[]>([]);
+  protected readonly courses = signal<CourseDto[]>([]);
   protected readonly editingId = signal<string | null>(null);
   protected readonly selectedStudent = signal<Student | null>(null);
 
@@ -43,6 +45,18 @@ export class StudentsComponent {
 
   constructor() {
     this.loadStudents();
+    this.loadCourses();
+  }
+
+  private loadCourses(): void {
+    this.coursesService.list().subscribe({
+      next: ({ items }) => {
+        this.courses.set(items);
+      },
+      error: () => {
+        console.error('No se pudieron cargar los cursos.');
+      }
+    });
   }
 
   private loadStudents(): void {

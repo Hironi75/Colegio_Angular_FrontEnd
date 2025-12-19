@@ -6,7 +6,8 @@ export const environment = {
     students: 'students',
     teachers: 'teachers',
     courses: 'courses',
-    enrollments: 'enrollments'
+    enrollments: 'enrollments',
+    grades: 'grades'
   },
   adminAuth: {
     identity: 'admin@colegio.com',

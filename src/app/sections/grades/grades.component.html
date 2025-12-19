@@ -1,0 +1,225 @@
+<section class="crud">
+  <header class="crud__header">
+    <div>
+      <h1>Gestión de Notas</h1>
+      <p>Administra las calificaciones de los estudiantes por curso</p>
+    </div>
+  </header>
+
+  <!-- Selector de Curso -->
+  <div class="course-selector">
+    <label for="courseSelect">
+      <strong>Seleccionar Curso:</strong>
+      <select
+        id="courseSelect"
+        [value]="selectedCourseId()"
+        (change)="onCourseSelect($any($event.target).value)"
+        class="course-select">
+        <option value="">-- Seleccione un curso --</option>
+        @for (course of courses(); track course.id) {
+          <option [value]="course.id">{{ course.title }} - {{ course.level }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <!-- Alerta de sistema de enrollments no configurado -->
+  <!-- @if (enrollmentsNotConfigured()) {
+    <div class="warning-message" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 4px;">
+      <p style="margin: 0; color: #856404; font-size: 0.9rem;">
+        ⚠️ <strong>Nota:</strong> No se detectó un sistema de matrículas (enrollments).
+        Los estudiantes se filtran automáticamente por grado/nivel.
+        Para mayor control, considera configurar matrículas (ver <strong>GUIA_ENROLLMENTS.md</strong>).
+      </p>
+    </div>
+  } -->
+
+  @if (error()) {
+    <div class="error-message">{{ error() }}</div>
+  }
+
+  @if (selectedCourseId()) {
+    <div class="crud__content">
+      <!-- Formulario de creación/edición -->
+      <aside class="crud__form">
+        <h2>{{ editingId() ? 'Editar Nota' : 'Registrar Nueva Nota' }}</h2>
+        <form [formGroup]="form" (ngSubmit)="saveGrade()">
+          <label>
+            Estudiante
+            <select formControlName="studentId" required [disabled]="getAvailableStudents().length === 0">
+              @if (getAvailableStudents().length === 0) {
+                <option value="">Todos los estudiantes ya tienen notas en este curso</option>
+              } @else {
+                <option value="">Seleccione un estudiante</option>
+                @for (student of getAvailableStudents(); track student.id) {
+                  <option [value]="student.id">{{ student.full_name }}</option>
+                }
+              }
+            </select>
+            @if (getAvailableStudents().length === 0 && !editingId()) {
+              <small style="color: #9fb0ea; font-size: 0.85rem; margin-top: 0.25rem;">
+                ℹ️ Todos los estudiantes del curso ya están calificados
+              </small>
+            }
+          </label>
+
+          <input type="hidden" formControlName="courseId" />
+
+          <label>
+            Nota 1
+            <input
+              type="number"
+              formControlName="note1"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Ingrese la primera nota"
+              required />
+          </label>
+
+          <label>
+            Nota 2
+            <input
+              type="number"
+              formControlName="note2"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Ingrese la segunda nota"
+              required />
+          </label>
+
+          <label>
+            Nota 3
+            <input
+              type="number"
+              formControlName="note3"
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="Ingrese la tercera nota"
+              required />
+          </label>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              [disabled]="loading()"
+              class="btn-primary"
+              [title]="'Guardar nota'">
+              @if (loading()) {
+                Guardando...
+              } @else {
+                {{ editingId() ? 'Actualizar' : 'Guardar' }}
+              }
+            </button>
+            @if (editingId()) {
+              <button
+                type="button"
+                (click)="startCreate()"
+                class="btn-secondary">
+                Cancelar
+              </button>
+            }
+          </div>
+        </form>
+      </aside>
+
+      <!-- Tabla de notas -->
+      <main class="crud__list">
+        <div class="list-header">
+          <h2>Notas del Curso: {{ selectedCourseName }}</h2>
+          <button
+            type="button"
+            (click)="exportToPDF()"
+            class="btn-export"
+            [disabled]="filteredGrades().length === 0">
+            📄 Exportar a PDF
+          </button>
+        </div>
+
+        @if (loading()) {
+          <div class="loading">Cargando notas...</div>
+        } @else if (filteredGrades().length === 0) {
+          <div class="empty-state">
+            <p>No hay notas registradas para este curso.</p>
+            <p class="empty-hint">Comienza agregando la primera nota usando el formulario.</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="grades-table">
+              <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Nota 1</th>
+                  <th>Nota 2</th>
+                  <th>Nota 3</th>
+                  <th>Promedio</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (grade of filteredGrades(); track grade.id) {
+                  <tr [class.editing]="editingId() === grade.id">
+                    <td>{{ grade.studentName }}</td>
+                    <td class="text-center">{{ grade.note1 }}</td>
+                    <td class="text-center">{{ grade.note2 }}</td>
+                    <td class="text-center">{{ grade.note3 }}</td>
+                    <td class="text-center average">{{ grade.average.toFixed(2) }}</td>
+                    <td class="text-center">
+                      <span [class]="'status-badge status-' + (grade.status === 'Aprobado' ? 'approved' : 'failed')">
+                        {{ grade.status }}
+                      </span>
+                    </td>
+                    <td class="actions">
+                      <button
+                        type="button"
+                        (click)="startEdit(grade)"
+                        class="btn-edit"
+                        title="Editar">
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteGrade(grade.id)"
+                        class="btn-delete"
+                        title="Eliminar">
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Resumen estadístico -->
+          <div class="stats-summary">
+            <div class="stat-card">
+              <span class="stat-label">Total:</span>
+              <span class="stat-value">{{ filteredGrades().length }}</span>
+            </div>
+            <div class="stat-card approved">
+              <span class="stat-label">Aprobados:</span>
+              <span class="stat-value">{{ approvedCount() }}</span>
+            </div>
+            <div class="stat-card failed">
+              <span class="stat-label">Reprobados:</span>
+              <span class="stat-value">{{ failedCount() }}</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Promedio General:</span>
+              <span class="stat-value">{{ generalAverage().toFixed(2) }}</span>
+            </div>
+          </div>
+        }
+      </main>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>👆 Seleccione un curso para ver y gestionar las notas</p>
+    </div>
+  }
+</section>
+

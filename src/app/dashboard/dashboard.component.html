@@ -9,20 +9,66 @@
   </header>
 
   <div class="dashboard__cards">
-    <article>
-      <p class="label">Estudiantes</p>
-      <strong>1,280</strong>
-      <small>+32 este mes</small>
+    <article class="dashboard__card dashboard__card--students">
+      <div class="dashboard__card-icon">👨‍🎓</div>
+      <div class="dashboard__card-content">
+        <p class="label">Estudiantes</p>
+        <strong>{{ stats().totalStudents }}</strong>
+        <small>{{ stats().studentsByStatus.activos }} activos</small>
+      </div>
     </article>
-    <article>
-      <p class="label">Docentes</p>
-      <strong>95</strong>
-      <small>+2 este mes</small>
+    <article class="dashboard__card dashboard__card--teachers">
+      <div class="dashboard__card-icon">👨‍🏫</div>
+      <div class="dashboard__card-content">
+        <p class="label">Docentes</p>
+        <strong>{{ stats().totalTeachers }}</strong>
+        <small>Personal académico</small>
+      </div>
     </article>
-    <article>
-      <p class="label">Pendientes</p>
-      <strong>18</strong>
-      <small>-4 vs. semana pasada</small>
+    <article class="dashboard__card dashboard__card--courses">
+      <div class="dashboard__card-icon">📚</div>
+      <div class="dashboard__card-content">
+        <p class="label">Cursos</p>
+        <strong>{{ stats().totalCourses }}</strong>
+        <small>Disponibles</small>
+      </div>
     </article>
   </div>
+
+  @if (loading()) {
+    <div class="dashboard__loading">
+      <p>Cargando estadísticas...</p>
+    </div>
+  } @else {
+    <h2 class="dashboard__section-title">📊 Informes y Estadísticas</h2>
+    <div class="dashboard__charts">
+      <article class="dashboard__chart-card dashboard__chart-card--wide">
+        <div class="dashboard__chart-header">
+          <h3>Resumen General</h3>
+          <span class="dashboard__chart-badge">Vista general</span>
+        </div>
+        <div class="dashboard__chart-container">
+          <canvas #overviewChart></canvas>
+        </div>
+      </article>
+      <article class="dashboard__chart-card">
+        <div class="dashboard__chart-header">
+          <h3>Estado de Estudiantes</h3>
+          <span class="dashboard__chart-badge">Activos vs Inactivos</span>
+        </div>
+        <div class="dashboard__chart-container">
+          <canvas #studentsChart></canvas>
+        </div>
+      </article>
+      <article class="dashboard__chart-card">
+        <div class="dashboard__chart-header">
+          <h3>Cursos por Nivel</h3>
+          <span class="dashboard__chart-badge">Distribución</span>
+        </div>
+        <div class="dashboard__chart-container">
+          <canvas #coursesChart></canvas>
+        </div>
+      </article>
+    </div>
+  }
 </section>
