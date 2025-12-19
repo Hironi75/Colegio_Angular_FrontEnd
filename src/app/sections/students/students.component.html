@@ -59,7 +59,8 @@
 
     <div class="crud__form-actions">
       <button type="submit">@if (editingId()) { Actualizar } @else { Guardar }</button>
-      <button type="button" class="crud__export" (click)="exportStudents()">Exportar</button>
+      <button type="button" class="crud__export" (click)="exportStudents()">📄 Exportar CSV</button>
+      <button type="button" class="crud__export crud__export--pdf" (click)="exportToPdf()">📕 Exportar PDF</button>
       <button type="button" (click)="startCreate()">Limpiar</button>
     </div>
   </form>

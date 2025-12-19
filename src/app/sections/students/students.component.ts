@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@a
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { tap } from 'rxjs/operators';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { exportToCsv } from '../../utils/csv-export';
 import { StudentsService, StudentDto } from '../../core/services/students.service';
 import { CoursesService, CourseDto } from '../../core/services/courses.service';
@@ -186,5 +188,67 @@ export class StudentsComponent {
     const header = ['Nombre', 'Grado', 'Estado', 'Rol'];
     const rows = this.students().map((student) => [student.name, student.grade, student.status, student.role]);
     exportToCsv(header, rows, 'estudiantes.csv');
+  }
+
+  protected exportToPdf(): void {
+    const students = this.filteredStudents();
+
+    if (students.length === 0) {
+      alert('No hay estudiantes para exportar.');
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // Título
+    doc.setFontSize(18);
+    doc.text('Reporte de Estudiantes', 14, 22);
+
+    // Información general
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 14, 32);
+    doc.text(`Total de estudiantes: ${students.length}`, 14, 38);
+
+    // Tabla de estudiantes
+    const tableData = students.map(student => [
+      student.name,
+      student.grade,
+      student.status,
+      student.role
+    ]);
+
+    autoTable(doc, {
+      head: [['Nombre', 'Grado', 'Estado', 'Rol']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [41, 128, 185] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      didDrawCell: (data) => {
+        // Colorear la columna de estado
+        if (data.column.index === 2 && data.section === 'body') {
+          const status = tableData[data.row.index][2];
+          if (status === 'Activo') {
+            doc.setTextColor(0, 128, 0);
+          } else {
+            doc.setTextColor(255, 0, 0);
+          }
+        }
+      }
+    });
+
+    // Estadísticas
+    const finalY = (doc as any).lastAutoTable.finalY || 45;
+    const activos = students.filter(s => s.status === 'Activo').length;
+    const inactivos = students.filter(s => s.status === 'Inactivo').length;
+
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Activos: ${activos}`, 14, finalY + 10);
+    doc.text(`Inactivos: ${inactivos}`, 14, finalY + 16);
+
+    // Guardar el PDF
+    const fileName = `estudiantes_${new Date().getTime()}.pdf`;
+    doc.save(fileName);
   }
 }

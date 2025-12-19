@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { exportToCsv } from '../../utils/csv-export';
 import { TeachersService, TeacherDto } from '../../core/services/teachers.service';
 
@@ -138,5 +140,55 @@ export class TeachersComponent {
     const header = ['Nombre', 'Materia', 'Disponibilidad'];
     const rows = this.teachers().map((teacher) => [teacher.name, teacher.subject, teacher.availability]);
     exportToCsv(header, rows, 'docentes.csv');
+  }
+
+  protected exportToPdf(): void {
+    const teachers = this.filteredTeachers();
+
+    if (teachers.length === 0) {
+      alert('No hay docentes para exportar.');
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // Título
+    doc.setFontSize(18);
+    doc.text('Reporte de Docentes', 14, 22);
+
+    // Información general
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 14, 32);
+    doc.text(`Total de docentes: ${teachers.length}`, 14, 38);
+
+    // Tabla de docentes
+    const tableData = teachers.map(teacher => [
+      teacher.name,
+      teacher.subject,
+      teacher.availability
+    ]);
+
+    autoTable(doc, {
+      head: [['Nombre', 'Materia', 'Disponibilidad']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [41, 128, 185] },
+      alternateRowStyles: { fillColor: [245, 245, 245] }
+    });
+
+    // Estadísticas
+    const finalY = (doc as any).lastAutoTable.finalY || 45;
+    const tiempoCompleto = teachers.filter(t => t.availability === 'Tiempo completo').length;
+    const medioTiempo = teachers.filter(t => t.availability === 'Medio tiempo').length;
+
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Tiempo completo: ${tiempoCompleto}`, 14, finalY + 10);
+    doc.text(`Medio tiempo: ${medioTiempo}`, 14, finalY + 16);
+
+    // Guardar el PDF
+    const fileName = `docentes_${new Date().getTime()}.pdf`;
+    doc.save(fileName);
   }
 }

@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, signal, computed, inject } from '@a
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { tap } from 'rxjs/operators';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { exportToCsv } from '../../utils/csv-export';
 import { CoursesService, CourseDto } from '../../core/services/courses.service';
 import { TeachersService, TeacherDto } from '../../core/services/teachers.service';
@@ -206,5 +208,56 @@ export class CoursesComponent {
       course.teacherName || 'Sin asignar'
     ]);
     exportToCsv(header, rows, 'cursos.csv');
+  }
+
+  protected exportToPdf(): void {
+    const courses = this.filteredCourses();
+
+    if (courses.length === 0) {
+      alert('No hay cursos para exportar.');
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    // Título
+    doc.setFontSize(18);
+    doc.text('Reporte de Cursos', 14, 22);
+
+    // Información general
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 14, 32);
+    doc.text(`Total de cursos: ${courses.length}`, 14, 38);
+
+    // Tabla de cursos
+    const tableData = courses.map(course => [
+      course.title,
+      course.level,
+      course.credits.toString(),
+      course.teacherName || 'Sin asignar'
+    ]);
+
+    autoTable(doc, {
+      head: [['Curso', 'Nivel', 'Créditos', 'Docente']],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [41, 128, 185] },
+      alternateRowStyles: { fillColor: [245, 245, 245] }
+    });
+
+    // Estadísticas
+    const finalY = (doc as any).lastAutoTable.finalY || 45;
+    const niveles = [...new Set(courses.map(c => c.level))];
+    const totalCreditos = courses.reduce((sum, c) => sum + c.credits, 0);
+
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Niveles: ${niveles.join(', ')}`, 14, finalY + 10);
+    doc.text(`Total de créditos: ${totalCreditos}`, 14, finalY + 16);
+
+    // Guardar el PDF
+    const fileName = `cursos_${new Date().getTime()}.pdf`;
+    doc.save(fileName);
   }
 }

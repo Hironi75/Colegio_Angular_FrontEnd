@@ -132,6 +132,17 @@
   background: rgba(93, 156, 255, 0.25);
 }
 
+.crud__form-actions .crud__export--pdf {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+  color: #f8b4b4;
+}
+
+.crud__form-actions .crud__export--pdf:hover {
+  opacity: 1;
+  background: rgba(220, 53, 69, 0.25);
+}
+
 .crud__table-wrapper {
   overflow-x: auto;
 }
